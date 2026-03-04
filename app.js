@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import express, { json } from 'express';
+import express from 'express';
 
 const app = express();
 
-app.use(json());
+app.use(express.json());
 
 app.get('/', (_, res) => {
   res.json({ message: 'Welcome to the Express server!' });
