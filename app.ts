@@ -10,7 +10,7 @@ console.log(`🚀 Running benchmark: ${CALLS_PER_TEST} calls per test, ${BENCHMA
 /**
  * Sequential execution: Call endpoint 100 times one by one
  */
-async function sequentialRequests() {
+async function sequentialRequests(): Promise<number> {
   const startTime = performance.now();
 
   try {
@@ -19,7 +19,7 @@ async function sequentialRequests() {
       await response.json();
     }
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', error instanceof Error ? error.message : String(error));
   }
 
   return performance.now() - startTime;
@@ -28,12 +28,12 @@ async function sequentialRequests() {
 /**
  * Parallel execution: Call endpoint 100 times with concurrency limit
  */
-async function parallelRequests(concurrencyLimit) {
+async function parallelRequests(concurrencyLimit: number): Promise<number> {
   const startTime = performance.now();
   const limit = pLimit(concurrencyLimit);
 
   try {
-    const promises = Array.from({ length: CALLS_PER_TEST }, () => {
+    const promises = Array.from({length: CALLS_PER_TEST}, () => {
       return limit(async () => {
         const response = await fetch(`${BASE_URL}${ENDPOINT}`);
         return response.json();
@@ -42,21 +42,21 @@ async function parallelRequests(concurrencyLimit) {
 
     await Promise.all(promises);
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', error instanceof Error ? error.message : String(error));
   }
 
   return performance.now() - startTime;
 }
 
-const timingsByType = {
+const timingsByType: Record<string, number[]> = {
   sequential: [],
-  parallel_20: [],
+  parallel_20: []
 };
 
 /**
  * Main benchmark function
  */
-async function runBenchmark() {
+async function runBenchmark(): Promise<void> {
   for (let i = 1; i <= BENCHMARK_RUNS; i++) {
     process.stdout.write(`\rProgress: ${i}/${BENCHMARK_RUNS}`);
 
@@ -64,7 +64,7 @@ async function runBenchmark() {
       timingsByType.sequential.push(await sequentialRequests());
       timingsByType.parallel_20.push(await parallelRequests(20));
     } catch (error) {
-      console.error(`\nError on iteration ${i}:`, error.message);
+      console.error(`\nError on iteration ${i}:`, error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -73,7 +73,7 @@ async function runBenchmark() {
   /**
    * Helper function to calculate statistics
    */
-  function getStats(times) {
+  function getStats(times: number[]): {avg: number; min: number; max: number; median: number; count: number} {
     const sorted = [...times].sort((a, b) => a - b);
     const sum = times.reduce((a, b) => a + b, 0);
     const avg = sum / times.length;
@@ -81,13 +81,13 @@ async function runBenchmark() {
     const max = sorted[times.length - 1];
     const median = sorted[Math.floor(sorted.length / 2)];
 
-    return { avg, min, max, median, count: times.length };
+    return {avg, min, max, median, count: times.length};
   }
 
   /**
    * Format a number with proper decimals
    */
-  function format(num) {
+  function format(num: number): string {
     return num.toFixed(2);
   }
 
@@ -98,8 +98,8 @@ async function runBenchmark() {
   console.log('════════════════════════════════════════════════════════════════\n');
 
   const configs = [
-    { key: 'sequential', label: 'Sequential' },
-    { key: 'parallel_20', label: 'Parallel (20 workers)' },
+    {key: 'sequential', label: 'Sequential'},
+    {key: 'parallel_20', label: 'Parallel (20 workers)'}
   ];
 
   console.log('Configuration          │  Average  │    Min    │    Max    │  Median');
@@ -107,9 +107,9 @@ async function runBenchmark() {
 
   const baselineAvg = getStats(timingsByType.sequential).avg;
 
-  for (const { key, label } of configs) {
+  for (const {key, label} of configs) {
     const stats = getStats(timingsByType[key]);
-    const improvement = key === 'sequential' ? '' : ` (${format(((baselineAvg - stats.avg) / baselineAvg * 100))}% faster)`;
+    const improvement = key === 'sequential' ? '' : ` (${format(((baselineAvg - stats.avg) / baselineAvg) * 100)}% faster)`;
     console.log(
       `${label.padEnd(22)} │ ${format(stats.avg).padStart(8)}ms │ ${format(stats.min).padStart(8)}ms │ ${format(stats.max).padStart(8)}ms │ ${format(stats.median).padStart(7)}ms${improvement}`
     );
