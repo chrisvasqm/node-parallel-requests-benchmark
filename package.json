@@ -5,8 +5,7 @@
   "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "test": "tsx app.ts",
-    "build": "tsc"
+    "start": "tsx app.ts"
   },
   "keywords": [],
   "author": "",
