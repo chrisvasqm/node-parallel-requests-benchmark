@@ -27,6 +27,7 @@ async function runSequential(url: string, count: number): Promise<number> {
   for (let i = 0; i < count; i++) {
     await fetchRequest(url);
   }
+
   return performance.now() - start;
 }
 
@@ -35,6 +36,7 @@ async function runParallel(url: string, count: number, workers: number): Promise
   const limit = pLimit(workers);
   const tasks = Array.from({length: count}, () => limit(() => fetchRequest(url)));
   await Promise.all(tasks);
+  
   return performance.now() - start;
 }
 
